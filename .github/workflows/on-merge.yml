@@ -1,0 +1,32 @@
+name: On PR Merge
+
+on:
+  pull_request:
+    types: [closed]
+
+env:
+  DOCKERFILE: Dockerfile
+  IMAGE_NAME: ghcr.io/pinteraktif/infra-fedora34-dev:latest
+
+jobs:
+  build-and-push:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Build & Push
+        run: |
+
+          # Login to Github docker registry
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+          # Build
+          docker build \
+            -t $IMAGE_NAME \
+            -f $DOCKERFILE \
+            .
+
+          # Push
+          docker push $IMAGE_NAME
